@@ -1,13 +1,13 @@
 package com.pman.distributedurlshortener.server;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.List;
-
-import org.apache.zookeeper.ZooKeeper;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.pman.distributedurlshortener.zk.State;
 import com.pman.distributedurlshortener.zk.ZKClient;
+import com.sun.net.httpserver.Headers;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 
@@ -57,12 +57,31 @@ public class HttpResponseHandler implements HttpHandler {
 			exchange.sendResponseHeaders(200, response.length());
 			exchange.getResponseBody().write(response.getBytes());
 			break;
-		case WebServer.NEW_RANGE:
-			long[] range = this.zkClient.getNewRange();
-			response = "{\"range\": " + new ObjectMapper().writeValueAsString(range) + "}";
+		case WebServer.NEW_NEXT:
+			long next = this.zkClient.getNewNext();
+			response = "{\"range\": " + next + "}";
 			exchange.getResponseHeaders().set("Content-Type", "application/json");
 			exchange.sendResponseHeaders(200, response.length());
 			exchange.getResponseBody().write(response.getBytes());
+			break;
+
+		case WebServer.SHORTEN:
+			if (exchange.getRequestMethod().equalsIgnoreCase("POST")) {
+				Headers requestHeaders = exchange.getRequestHeaders();
+				int contentLength = Integer.parseInt(requestHeaders.getFirst("Content-length"));
+				byte[] data = new byte[contentLength];
+				
+				InputStream inputStream = exchange.getRequestBody();
+				int length = inputStream.read(data);
+				
+				long cur = zkClient.getNext();
+				Base64Converter converter = new Base64Converter();
+				String shortURL = Base64Converter.longToBase64(cur);
+				response = "{\"url\": \"https://d.us/" + shortURL + "\"}";
+				exchange.getResponseHeaders().set("Content-Type", "application/json");
+				exchange.sendResponseHeaders(200, response.length());
+				exchange.getResponseBody().write(response.getBytes());
+			}
 			break;
 		}
 	}

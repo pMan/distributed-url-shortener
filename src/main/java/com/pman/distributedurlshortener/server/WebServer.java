@@ -14,7 +14,8 @@ public class WebServer {
 	static final String SERVER_STATUS = "/status";
 	static final String ZNODE_INFO = "/info";
 	static final String LIST_ALL_ZNODES = "/nodes";
-	static final String NEW_RANGE = "/new-range";
+	static final String NEW_NEXT = "/next";
+	static final String SHORTEN = "/shorten";
 
 	private HttpServer httpServer;
 	private int port;
@@ -27,7 +28,8 @@ public class WebServer {
 		httpServer.createContext(SERVER_STATUS, new HttpResponseHandler(zkClient, SERVER_STATUS));
 		httpServer.createContext(ZNODE_INFO, new HttpResponseHandler(zkClient, ZNODE_INFO));
 		httpServer.createContext(LIST_ALL_ZNODES, new HttpResponseHandler(zkClient, LIST_ALL_ZNODES));
-		httpServer.createContext(NEW_RANGE, new HttpResponseHandler(zkClient, NEW_RANGE));
+		httpServer.createContext(NEW_NEXT, new HttpResponseHandler(zkClient, NEW_NEXT));
+		httpServer.createContext(SHORTEN, new HttpResponseHandler(zkClient, SHORTEN));
 	}
 
 	public HttpContext addContext(String path, HttpHandler handler) {

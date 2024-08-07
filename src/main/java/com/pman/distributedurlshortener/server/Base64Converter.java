@@ -46,7 +46,7 @@ public class Base64Converter {
 		
 	}
 	
-	private static String longToBase64(long num) {
+	public static String longToBase64(long num) {
 		StringBuilder sb = new StringBuilder();
 		do {
 			sb.append(input[(int) (num % len)]);

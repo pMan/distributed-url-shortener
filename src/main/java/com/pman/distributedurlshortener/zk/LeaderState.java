@@ -31,7 +31,7 @@ public class LeaderState implements Serializable {
 	 * 
 	 * @return
 	 */
-	public long[] next(int size) {
+	public long next(int size) {
 		long curStart = nextAvailable.get();
 		long newStart = curStart + size;
 		
@@ -40,7 +40,7 @@ public class LeaderState implements Serializable {
 			curStart = nextAvailable.get();
 			newStart = curStart + size;
 		}
-		return new long[] {curStart, newStart - 1};
+		return curStart;
 	}
 	
 	public byte[] toBytes() {

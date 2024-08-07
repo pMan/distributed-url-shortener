@@ -6,8 +6,7 @@ import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicLongArray;
-import java.util.concurrent.atomic.AtomicReferenceArray;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.LockSupport;
 
 import org.apache.zookeeper.CreateMode;
@@ -27,9 +26,6 @@ public class ZKClient implements Watcher {
 	private static final String znodePrefix = ELECTION_NAMESPACE + "/app_";
 	
 	private ZooKeeper zooKeeper;
-	private String zkHostPort;
-	private int sessionTimeout;
-	
 	private static String webServerPort; 
 	
 	private String nodeName;
@@ -37,22 +33,18 @@ public class ZKClient implements Watcher {
 	private boolean isLeader;
 	
 	private final int BATCH_SIZE = 100;
-	private long[] hashRange = new long[] {0, 0};
+	private AtomicLong next= new AtomicLong(0L);
 	
-	public ZKClient(String zkHostPort, int timeout, int webServerPort) throws IOException, KeeperException, InterruptedException {
-		this.zkHostPort = zkHostPort;
-		this.sessionTimeout = timeout;
-		this.webServerPort = "" + webServerPort;
-		
+	public ZKClient(String zkHostPort, int sessionTimeout, int webServerPort) throws IOException, KeeperException, InterruptedException {
 		isLeader = false;
 
-		zooKeeper = new ZooKeeper(this.zkHostPort, this.sessionTimeout, this);
-		
+		zooKeeper = new ZooKeeper(zkHostPort, sessionTimeout, this);
+
 		state = createState();
 		createZnode();
 		electLeader();
 
-		hashRange = getNewRange();
+		next.set(getNewNext());
 	}
 
 	/**
@@ -78,7 +70,7 @@ public class ZKClient implements Watcher {
 		String znodeFullPath = zooKeeper.create(znodePrefix, data, ZooDefs.Ids.OPEN_ACL_UNSAFE,
 				CreateMode.EPHEMERAL_SEQUENTIAL);
 
-		System.out.println("znode name " + znodeFullPath);
+		System.out.println("znode created: " + znodeFullPath);
 		this.state.setPath(znodeFullPath);
 		nodeName = znodeFullPath.replace(ELECTION_NAMESPACE + "/", "");
 	}
@@ -127,6 +119,10 @@ public class ZKClient implements Watcher {
 	 * @throws KeeperException if node already exists
 	 */
 	Stat createLeaderZnode() throws KeeperException, InterruptedException {
+		Stat stat = nodeExists(LEADER_NODE);
+		if (null != stat)
+			return stat;
+		
 		LeaderState leaderState = new LeaderState(0L);
 		String rootNode = zooKeeper.create(LEADER_NODE, leaderState.toBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE,
 				CreateMode.PERSISTENT);
@@ -143,19 +139,19 @@ public class ZKClient implements Watcher {
 	 * 
 	 * @return
 	 */
-	public long[] getNewRange() {
-		long[] newRange = new long[] { 0, 0 };
+	public long getNewNext() {
+		long newNext = 0L;
 		Stat stat = nodeExists(LEADER_NODE);
 		boolean updateSucceeded = false;
 		do {
 			try {
 				byte[] data = zooKeeper.getData(LEADER_NODE, false, stat);
 				LeaderState leaderState = LeaderState.fromBytes(data);
-				newRange = leaderState.next(BATCH_SIZE);
+				newNext = leaderState.next(BATCH_SIZE);
 
 				zooKeeper.setData(LEADER_NODE, leaderState.toBytes(), stat.getVersion());
 				updateSucceeded = true;
-				System.out.println("Update succes, next available range: " + newRange[0] + " - " + newRange[1]);
+				System.out.println("Next available hash: " + newNext);
 			} catch (KeeperException e) {
 				System.out.println("Error: " + e.code().toString());
 				e.printStackTrace();
@@ -167,7 +163,11 @@ public class ZKClient implements Watcher {
 				LockSupport.parkNanos(10);
 
 		} while (updateSucceeded == false);
-		return newRange;
+		return newNext;
+	}
+	
+	public long getNext() {
+		return next.getAndIncrement();
 	}
 	
 	private Stat nodeExists(String path) {
