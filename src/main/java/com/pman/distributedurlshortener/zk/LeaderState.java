@@ -1,15 +1,11 @@
 package com.pman.distributedurlshortener.zk;
 
 import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
 import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
-import java.io.Serializable;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.LockSupport;
 
-public class LeaderState implements Serializable {
+public class LeaderState extends Ser {
 
 	private static final long serialVersionUID = 1L;
 	
@@ -43,17 +39,6 @@ public class LeaderState implements Serializable {
 		return curStart;
 	}
 	
-	public byte[] toBytes() {
-	    ByteArrayOutputStream byteStream = new ByteArrayOutputStream();
-	    try {
-	    	ObjectOutputStream objStream = new ObjectOutputStream(byteStream);
-			objStream.writeObject(this);
-		} catch (IOException e) {
-			throw new RuntimeException(e.getMessage());
-		}
-	    return byteStream.toByteArray();
-	}
-	
 	public static LeaderState fromBytes(byte[] bytes) {
 		ByteArrayInputStream byteStream = new ByteArrayInputStream(bytes);
 
@@ -64,5 +49,5 @@ public class LeaderState implements Serializable {
 			throw new RuntimeException(e.getMessage());
 		}
 	}
-	
+
 }

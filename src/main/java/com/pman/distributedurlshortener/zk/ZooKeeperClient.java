@@ -11,13 +11,11 @@ import java.util.concurrent.locks.LockSupport;
 
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
-import org.apache.zookeeper.WatchedEvent;
-import org.apache.zookeeper.Watcher;
 import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.data.Stat;
 
-public class ZKClient implements Watcher {
+public class ZooKeeperClient {
 
 	private static final String DUS_NAMESPACE = "/DUS";
 	private static final String ELECTION_NAMESPACE = DUS_NAMESPACE + "/election";
@@ -26,25 +24,27 @@ public class ZKClient implements Watcher {
 	private static final String znodePrefix = ELECTION_NAMESPACE + "/app_";
 	
 	private ZooKeeper zooKeeper;
-	private static String webServerPort; 
+	private DusWatcher watcher;
+	private String webServerPort; 
 	
 	private String nodeName;
 	private State state;
-	private boolean isLeader;
 	
 	private final int BATCH_SIZE = 100;
 	private AtomicLong next= new AtomicLong(0L);
+	private long max;
 	
-	public ZKClient(String zkHostPort, int sessionTimeout, int webServerPort) throws IOException, KeeperException, InterruptedException {
-		isLeader = false;
-
-		zooKeeper = new ZooKeeper(zkHostPort, sessionTimeout, this);
-
+	public ZooKeeperClient(String zkHostPort, int sessionTimeout, int webServerPort) throws IOException, KeeperException, InterruptedException {
+		watcher = new DusWatcher(this);
+		zooKeeper = new ZooKeeper(zkHostPort, sessionTimeout, watcher);
+		this.webServerPort = "" + webServerPort;
+		
 		state = createState();
 		createZnode();
 		electLeader();
 
-		next.set(getNewNext());
+		updateNext();
+		max = next.get() + BATCH_SIZE;
 	}
 
 	/**
@@ -92,19 +92,16 @@ public class ZKClient implements Watcher {
 			String smallestChild = children.get(0);
 
 			if (smallestChild.equals(nodeName)) {
-				System.out.println("I am the leader");
-				isLeader = true;
+				System.out.println("I've been selected as the leader");
 				initLeaderRoles();
 				return;
 			} else {
-				isLeader = false;
-				System.out.println("I am not the leader");
 				int predecessorIndex = Collections.binarySearch(children, nodeName) - 1;
 				predecessorZnodeName = children.get(predecessorIndex);
-				predecessorStat = zooKeeper.exists(ELECTION_NAMESPACE + "/" + predecessorZnodeName, this);
+				predecessorStat = zooKeeper.exists(ELECTION_NAMESPACE + "/" + predecessorZnodeName, watcher);
+				System.out.println("Watching znode " + predecessorZnodeName);
 			}
 		}
-		System.out.println("Watching znode " + predecessorZnodeName);
 	}
 
 	private void initLeaderRoles() throws KeeperException, InterruptedException {
@@ -131,18 +128,30 @@ public class ZKClient implements Watcher {
 	}
 	
 	/**
-	 * only leader will respond to calls to this method. clients should find out the leader
-	 * and invoke this method on leader.
 	 * 
-	 * TODO: this task should be exposed by a RESTful endpoint on leader node and all non-leader nodes should 
-	 * invoke an http request to get the next range
+	 * TODO: this task should be exposed by a RESTful endpoint on leader instance and all non-leader nodes
+	 * should invoke an http request to get the next range
+	 * 
+	 * only leader should respond to calls to this method. Currently, all instances can invoke this method
+	 * on them, but with a synchronized state update of the leader znode on zookeeper cluster
+	 * 
+	 * @return long number
+	 */
+	public void updateNext() {
+		long next = getGlobalNext();
+		this.next.set(next);
+		this.max = next + BATCH_SIZE;
+	}
+
+	/**
+	 * find the next available long that's unique across all apps in the cluster
 	 * 
 	 * @return
 	 */
-	public long getNewNext() {
-		long newNext = 0L;
+	public long getGlobalNext() {
 		Stat stat = nodeExists(LEADER_NODE);
 		boolean updateSucceeded = false;
+		long newNext = 0L;
 		do {
 			try {
 				byte[] data = zooKeeper.getData(LEADER_NODE, false, stat);
@@ -166,10 +175,6 @@ public class ZKClient implements Watcher {
 		return newNext;
 	}
 	
-	public long getNext() {
-		return next.getAndIncrement();
-	}
-	
 	private Stat nodeExists(String path) {
 		try {
 			return zooKeeper.exists(path, false);
@@ -179,8 +184,21 @@ public class ZKClient implements Watcher {
 		return null;
 	}
 	
-	public State getNodeState() {
+	public long getNext() {
+		long cur = next.getAndIncrement();
+		if (cur < max)
+			return cur;
+		
+		this.updateNext();
+		return getNext();
+	}
+	
+	public State getState() {
 		return state;
+	}
+	
+	public ZooKeeper getZooKeeper() {
+		return zooKeeper;
 	}
 	
 	/**
@@ -191,10 +209,10 @@ public class ZKClient implements Watcher {
 	public List<State> znodes() {
 		try {
 			List<State> list = new ArrayList<>();
-			
 			List<String> children = zooKeeper.getChildren(ELECTION_NAMESPACE, false);
+			System.out.println("Number of active nodes: " + children.size());
+			
 			for (String child: children) {
-				System.out.println("Child node: " + child);
 				
 				Stat stat = zooKeeper.exists(ELECTION_NAMESPACE + "/" + child, false);
 				byte[] data = zooKeeper.getData(ELECTION_NAMESPACE + "/" + child, false, stat);
@@ -227,35 +245,6 @@ public class ZKClient implements Watcher {
 		return new State(address, webServerPort);
 	}
 	
-	@Override
-	public void process(WatchedEvent event) {
-		{
-			switch (event.getType()) {
-			case None:
-				if (event.getState() == Event.KeeperState.SyncConnected) {
-					System.out.println("Successfully connected to Zookeeper");
-				} else {
-					synchronized (zooKeeper) {
-						this.state = null;
-						System.out.println("Disconnected from Zookeeper event");
-						zooKeeper.notifyAll();
-					}
-				}
-				break;
-			case NodeDeleted:
-				try {
-					electLeader();
-				} catch (InterruptedException e) {
-				} catch (KeeperException e) {
-				}
-
-			default:
-				System.out.println(event.getPath() + " is not handled in switch case");
-				break;
-			}
-		}
-	}
-
 	public void close() {
 		try {
 			zooKeeper.close();

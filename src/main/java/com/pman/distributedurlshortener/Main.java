@@ -7,7 +7,7 @@ import java.util.Properties;
 import org.apache.zookeeper.KeeperException;
 
 import com.pman.distributedurlshortener.server.WebServer;
-import com.pman.distributedurlshortener.zk.ZKClient;
+import com.pman.distributedurlshortener.zk.ZooKeeperClient;
 
 public class Main {
     
@@ -26,7 +26,7 @@ public class Main {
 		}
 
 		
-		ZKClient zkClient = new ZKClient(props.getProperty("zkHostPort"), 
+		ZooKeeperClient zkClient = new ZooKeeperClient (props.getProperty("zkHostPort"), 
 				(int) props.get("zkSessionTimeOut"),
 				Integer.valueOf((String) props.get("httpServerPort")));
 

@@ -2,11 +2,6 @@ package com.pman.distributedurlshortener.server;
 
 public class Base64Converter {
 
-	static Character[] chars = new Character[] { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D',
-			'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y',
-			'Z', 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't',
-			'u', 'v', 'w', 'x', 'y', 'z', '_', '-' };
-
 	// shuffled array containing [0-9a-zA-Z-_]+
 	private static final char[] input = new char[] { '-', 'c', 'h', 'i', 'j', '5', 'V', 'M', 'n', 'H', 'I', '3', 'u', 'U', 'G', 'b', 'F',
 			't', 'v', 'L', 'E', '2', 'm', '8', 'k', 'g', 'a', 'R', '_', 'r', 'P', 'w', 'y', '9', 'W', 'S', 'z', 's',
@@ -46,6 +41,12 @@ public class Base64Converter {
 		
 	}
 	
+	/**
+	 * encode a long to a custom base-64 number system
+	 * 
+	 * @param num
+	 * @return
+	 */
 	public static String longToBase64(long num) {
 		StringBuilder sb = new StringBuilder();
 		do {

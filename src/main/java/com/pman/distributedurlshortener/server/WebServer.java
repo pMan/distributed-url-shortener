@@ -3,9 +3,7 @@ package com.pman.distributedurlshortener.server;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 
-import com.pman.distributedurlshortener.zk.ZKClient;
-import com.sun.net.httpserver.HttpContext;
-import com.sun.net.httpserver.HttpHandler;
+import com.pman.distributedurlshortener.zk.ZooKeeperClient;
 import com.sun.net.httpserver.HttpServer;
 
 public class WebServer {
@@ -19,25 +17,31 @@ public class WebServer {
 
 	private HttpServer httpServer;
 	private int port;
-
-	public WebServer(int port, ZKClient zkClient) throws IOException {
+	private ZooKeeperClient ZooKeeperClient;
+	
+	/**
+	 * constructor
+	 * 
+	 * @param port
+	 * @param ZooKeeperClient
+	 * @throws IOException
+	 */
+	public WebServer(int port, ZooKeeperClient ZooKeeperClient) throws IOException {
 		httpServer = HttpServer.create(new InetSocketAddress(port), 0);
 		this.port = port;
+		this.ZooKeeperClient = ZooKeeperClient;
 
-		httpServer.createContext(HOME, new HttpResponseHandler(zkClient, HOME));
-		httpServer.createContext(SERVER_STATUS, new HttpResponseHandler(zkClient, SERVER_STATUS));
-		httpServer.createContext(ZNODE_INFO, new HttpResponseHandler(zkClient, ZNODE_INFO));
-		httpServer.createContext(LIST_ALL_ZNODES, new HttpResponseHandler(zkClient, LIST_ALL_ZNODES));
-		httpServer.createContext(NEW_NEXT, new HttpResponseHandler(zkClient, NEW_NEXT));
-		httpServer.createContext(SHORTEN, new HttpResponseHandler(zkClient, SHORTEN));
-	}
-
-	public HttpContext addContext(String path, HttpHandler handler) {
-		return httpServer.createContext(path, handler);
+		httpServer.createContext(HOME, new HttpResponseHandler(ZooKeeperClient, HOME));
+		httpServer.createContext(SERVER_STATUS, new HttpResponseHandler(ZooKeeperClient, SERVER_STATUS));
+		httpServer.createContext(ZNODE_INFO, new HttpResponseHandler(ZooKeeperClient, ZNODE_INFO));
+		httpServer.createContext(LIST_ALL_ZNODES, new HttpResponseHandler(ZooKeeperClient, LIST_ALL_ZNODES));
+		httpServer.createContext(NEW_NEXT, new HttpResponseHandler(ZooKeeperClient, NEW_NEXT));
+		httpServer.createContext(SHORTEN, new HttpResponseHandler(ZooKeeperClient, SHORTEN));
 	}
 
 	public void start() {
 		httpServer.start();
-		System.out.println("Server started. Accepting requests on " + port);
+		String serverAddress = "http://" + this.ZooKeeperClient.getState().getIp() + ":" + port;
+		System.out.println("Http server started, accepting requests at " + serverAddress);
 	}
 }
