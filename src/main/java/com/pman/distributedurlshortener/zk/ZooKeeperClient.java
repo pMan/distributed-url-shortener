@@ -1,5 +1,10 @@
 package com.pman.distributedurlshortener.zk;
 
+import static com.pman.distributedurlshortener.Defaults.DUS_NAMESPACE;
+import static com.pman.distributedurlshortener.Defaults.ELECTION_NAMESPACE;
+import static com.pman.distributedurlshortener.Defaults.LEADER_NODE;
+import static com.pman.distributedurlshortener.Defaults.ZNODE_PREFIX;
+
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
@@ -17,12 +22,6 @@ import org.apache.zookeeper.data.Stat;
 
 public class ZooKeeperClient {
 
-	private static final String DUS_NAMESPACE = "/DUS";
-	private static final String ELECTION_NAMESPACE = DUS_NAMESPACE + "/election";
-	private static final String LEADER_ZNODE_NAME = "leader";
-	private static final String LEADER_NODE = DUS_NAMESPACE + "/" + LEADER_ZNODE_NAME;
-	private static final String znodePrefix = ELECTION_NAMESPACE + "/app_";
-	
 	private ZooKeeper zooKeeper;
 	private DusWatcher watcher;
 	private String webServerPort; 
@@ -34,10 +33,10 @@ public class ZooKeeperClient {
 	private AtomicLong next= new AtomicLong(0L);
 	private long max;
 	
-	public ZooKeeperClient(String zkHostPort, int sessionTimeout, int webServerPort) throws IOException, KeeperException, InterruptedException {
+	public ZooKeeperClient(String zkHostPort, int sessionTimeout, String webServerPort) throws IOException, KeeperException, InterruptedException {
 		watcher = new DusWatcher(this);
 		zooKeeper = new ZooKeeper(zkHostPort, sessionTimeout, watcher);
-		this.webServerPort = "" + webServerPort;
+		this.webServerPort =  webServerPort;
 		
 		state = createState();
 		createZnode();
@@ -53,7 +52,7 @@ public class ZooKeeperClient {
 	 * @throws KeeperException
 	 * @throws InterruptedException
 	 */
-	public void createZnode() throws KeeperException, InterruptedException {
+	private void createZnode() throws KeeperException, InterruptedException {
 		
 		if (null == zooKeeper.exists(DUS_NAMESPACE, false)) {
 			String rootNode = zooKeeper.create(DUS_NAMESPACE, new byte[] {}, ZooDefs.Ids.OPEN_ACL_UNSAFE,
@@ -67,7 +66,7 @@ public class ZooKeeperClient {
 		}
 
 		byte[] data = state.toBytes();
-		String znodeFullPath = zooKeeper.create(znodePrefix, data, ZooDefs.Ids.OPEN_ACL_UNSAFE,
+		String znodeFullPath = zooKeeper.create(ZNODE_PREFIX, data, ZooDefs.Ids.OPEN_ACL_UNSAFE,
 				CreateMode.EPHEMERAL_SEQUENTIAL);
 
 		System.out.println("znode created: " + znodeFullPath);
@@ -104,12 +103,18 @@ public class ZooKeeperClient {
 		}
 	}
 
+	/**
+	 * initialize leader responsibilities
+	 * 
+	 * @throws KeeperException
+	 * @throws InterruptedException
+	 */
 	private void initLeaderRoles() throws KeeperException, InterruptedException {
 		createLeaderZnode();
 	}
 	
 	/**
-	 * creates a leader ZNode.
+	 * creates a leader znode if not present.
 	 * 
 	 * @return Stat stat
 	 * @throws InterruptedException 
@@ -144,7 +149,7 @@ public class ZooKeeperClient {
 	}
 
 	/**
-	 * find the next available long that's unique across all apps in the cluster
+	 * find the next available long that's unique across all apps in the cluster. leader znode keeps track of it
 	 * 
 	 * @return
 	 */
@@ -160,7 +165,7 @@ public class ZooKeeperClient {
 
 				zooKeeper.setData(LEADER_NODE, leaderState.toBytes(), stat.getVersion());
 				updateSucceeded = true;
-				System.out.println("Next available hash: " + newNext);
+				System.out.println("Next available number: " + newNext);
 			} catch (KeeperException e) {
 				System.out.println("Error: " + e.code().toString());
 				e.printStackTrace();
@@ -175,15 +180,12 @@ public class ZooKeeperClient {
 		return newNext;
 	}
 	
-	private Stat nodeExists(String path) {
-		try {
-			return zooKeeper.exists(path, false);
-		} catch (KeeperException | InterruptedException e) {
-			e.printStackTrace();
-		}
-		return null;
-	}
-	
+	/**
+	 * get the next long from the range of available numbers. if current number is the last one
+	 * in the given range, calculate next range of numbers and return current.
+	 * 
+	 * @return long number
+	 */
 	public long getNext() {
 		long cur = next.getAndIncrement();
 		if (cur < max)
@@ -191,6 +193,15 @@ public class ZooKeeperClient {
 		
 		this.updateNext();
 		return getNext();
+	}
+
+	private Stat nodeExists(String path) {
+		try {
+			return zooKeeper.exists(path, false);
+		} catch (KeeperException | InterruptedException e) {
+			e.printStackTrace();
+		}
+		return null;
 	}
 	
 	public State getState() {
@@ -202,7 +213,7 @@ public class ZooKeeperClient {
 	}
 	
 	/**
-	 * get all ZNodes registered under the leader election namespace
+	 * get all znodes registered under the leader election namespace
 	 * 
 	 * @return
 	 */

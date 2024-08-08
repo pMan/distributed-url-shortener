@@ -16,14 +16,12 @@ import com.sun.net.httpserver.HttpHandler;
 public class HttpResponseHandler implements HttpHandler {
 
 	private ZooKeeperClient zkClient;
-	private String uri;
 	private static String homeTemplate = "<html style=\"color:gray; font-family: Arial; margin: 20px 10px;\"><body>"
 			+ "<h2>Distributed URL shortener</h2>" + "<a href=\"/status\">Node Stauts</a> | "
 			+ "<a href=\"/info\">Node Info</a> | " + "<a href=\"/nodes\">List Cluster Nodes</a> " + "</body></html>";
 
-	public HttpResponseHandler(ZooKeeperClient zkClient, String endpoint) {
+	public HttpResponseHandler(ZooKeeperClient zkClient) {
 		this.zkClient = zkClient;
-		this.uri = endpoint;
 	}
 
 	private void flush(HttpExchange exchange, int code, String message) throws IOException {
@@ -32,10 +30,17 @@ public class HttpResponseHandler implements HttpHandler {
 		exchange.close();
 	}
 	
+	private void flushREST(HttpExchange exchange, int code, String message) throws IOException {
+		exchange.getResponseHeaders().set("Content-Type", "application/json");
+		flush(exchange, code, message);
+	}
+	
 	@Override
 	public void handle(HttpExchange exchange) throws IOException {
 		String response = "";
-
+		String uri = exchange.getRequestURI().getPath();
+		System.out.println("URI: " + uri);
+		
 		switch (uri) {
 		case WebServer.HOME:
 			response = homeTemplate;
@@ -44,29 +49,25 @@ public class HttpResponseHandler implements HttpHandler {
 
 		case WebServer.SERVER_STATUS:
 			response = "{\"status\": \"LIVE\"}";
-			exchange.getResponseHeaders().set("Content-Type", "application/json");
-			flush(exchange, HttpURLConnection.HTTP_OK, response);
+			flushREST(exchange, HttpURLConnection.HTTP_OK, response);
 			break;
 
 		case WebServer.ZNODE_INFO:
 			State state = zkClient.getState();
 			response = new ObjectMapper().writeValueAsString(state);
-			exchange.getResponseHeaders().set("Content-Type", "application/json");
-			flush(exchange, HttpURLConnection.HTTP_OK, response);
+			flushREST(exchange, HttpURLConnection.HTTP_OK, response);
 			break;
 
 		case WebServer.LIST_ALL_ZNODES:
 			List<State> nodes = zkClient.znodes();
 			response = new ObjectMapper().writeValueAsString(nodes);
-			exchange.getResponseHeaders().set("Content-Type", "application/json");
-			flush(exchange, HttpURLConnection.HTTP_OK, response);
+			flushREST(exchange, HttpURLConnection.HTTP_OK, response);
 			break;
 			
 		case WebServer.NEW_NEXT:
 			long next = this.zkClient.getGlobalNext();
 			response = "{\"next\": " + next + "}";
-			exchange.getResponseHeaders().set("Content-Type", "application/json");
-			flush(exchange, HttpURLConnection.HTTP_OK, response);
+			flushREST(exchange, HttpURLConnection.HTTP_OK, response);
 			break;
 
 		case WebServer.SHORTEN:
@@ -88,8 +89,7 @@ public class HttpResponseHandler implements HttpHandler {
 				long cur = zkClient.getNext();
 				String shortURL = Base64Converter.longToBase64(cur);
 				response = "{\"url\": \"https://d.us/" + shortURL + "\"}";
-				exchange.getResponseHeaders().set("Content-Type", "application/json");
-				flush(exchange, HttpURLConnection.HTTP_OK, response);
+				flushREST(exchange, HttpURLConnection.HTTP_OK, response);
 			}
 			break;
 		}

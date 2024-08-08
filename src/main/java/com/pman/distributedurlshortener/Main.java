@@ -25,16 +25,15 @@ public class Main {
 			}
 		}
 
+		String hostport = props.getProperty("zk.hostport");
+		int timeout = (int) props.get("zk.session.timeout");
+		String port = (String) props.get("http.server.port");
 		
-		ZooKeeperClient zkClient = new ZooKeeperClient (props.getProperty("zkHostPort"), 
-				(int) props.get("zkSessionTimeOut"),
-				Integer.valueOf((String) props.get("httpServerPort")));
-
-		WebServer httpServer = new WebServer(Integer.valueOf((String) props.get("httpServerPort")), zkClient);
+		ZooKeeperClient zooKeeperClient = new ZooKeeperClient (hostport, timeout, port);
+		WebServer httpServer = new WebServer(port, zooKeeperClient);
 		
 		httpServer.start();
-		
-		zkClient.waitTillDisconnected();
+		zooKeeperClient.waitTillDisconnected();
 	}
 
 }

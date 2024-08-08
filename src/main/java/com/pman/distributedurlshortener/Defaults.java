@@ -19,12 +19,19 @@ public class Defaults {
      */
     static final String HTTP_SERVER_PORT = "8090";
     
+
+	public static final String DUS_NAMESPACE = "/DUS";
+	public static final String ELECTION_NAMESPACE = DUS_NAMESPACE + "/election";
+	public static final String LEADER_ZNODE_NAME = "leader";
+	public static final String LEADER_NODE = DUS_NAMESPACE + "/" + LEADER_ZNODE_NAME;
+	public static final String ZNODE_PREFIX = ELECTION_NAMESPACE + "/app_";
+	
     public static Properties loadDefault() {
 		Properties props = new Properties();
 		
-		props.put("zkHostPort", ZOOKEEPER_HOST_PORT);
-		props.put("zkSessionTimeOut", SESSION_TIMEOUT_MS);
-		props.put("httpServerPort", HTTP_SERVER_PORT);
+		props.put("zk.hostport", ZOOKEEPER_HOST_PORT);
+		props.put("zk.session.timeout", SESSION_TIMEOUT_MS);
+		props.put("http.server.port", HTTP_SERVER_PORT);
 		
 		return props;
 	}

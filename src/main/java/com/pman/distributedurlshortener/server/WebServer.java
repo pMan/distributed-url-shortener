@@ -2,6 +2,7 @@ package com.pman.distributedurlshortener.server;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
+import java.util.concurrent.Executors;
 
 import com.pman.distributedurlshortener.zk.ZooKeeperClient;
 import com.sun.net.httpserver.HttpServer;
@@ -26,17 +27,21 @@ public class WebServer {
 	 * @param ZooKeeperClient
 	 * @throws IOException
 	 */
-	public WebServer(int port, ZooKeeperClient ZooKeeperClient) throws IOException {
-		httpServer = HttpServer.create(new InetSocketAddress(port), 0);
-		this.port = port;
+	public WebServer(String port, ZooKeeperClient ZooKeeperClient) throws IOException {
+		this.port = Integer.parseInt(port);
+		httpServer = HttpServer.create(new InetSocketAddress(this.port), 0);
+		
 		this.ZooKeeperClient = ZooKeeperClient;
-
-		httpServer.createContext(HOME, new HttpResponseHandler(ZooKeeperClient, HOME));
-		httpServer.createContext(SERVER_STATUS, new HttpResponseHandler(ZooKeeperClient, SERVER_STATUS));
-		httpServer.createContext(ZNODE_INFO, new HttpResponseHandler(ZooKeeperClient, ZNODE_INFO));
-		httpServer.createContext(LIST_ALL_ZNODES, new HttpResponseHandler(ZooKeeperClient, LIST_ALL_ZNODES));
-		httpServer.createContext(NEW_NEXT, new HttpResponseHandler(ZooKeeperClient, NEW_NEXT));
-		httpServer.createContext(SHORTEN, new HttpResponseHandler(ZooKeeperClient, SHORTEN));
+		HttpResponseHandler httpResponseHandler = new HttpResponseHandler(ZooKeeperClient);
+		
+		httpServer.createContext(HOME, httpResponseHandler);
+		httpServer.createContext(SERVER_STATUS, httpResponseHandler);
+		httpServer.createContext(ZNODE_INFO, httpResponseHandler);
+		httpServer.createContext(LIST_ALL_ZNODES, httpResponseHandler);
+		httpServer.createContext(NEW_NEXT, httpResponseHandler);
+		httpServer.createContext(SHORTEN, httpResponseHandler);
+		
+		httpServer.setExecutor(Executors.newFixedThreadPool(4));
 	}
 
 	public void start() {
