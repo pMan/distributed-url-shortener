@@ -21,8 +21,8 @@ public class Defaults {
 
     public static final String DUS_NAMESPACE = "/DUS";
     public static final String ELECTION_NAMESPACE = DUS_NAMESPACE + "/election";
-    public static final String LEADER_ZNODE_NAME = "leader";
-    public static final String LEADER_NODE = DUS_NAMESPACE + "/" + LEADER_ZNODE_NAME;
+    public static final String GLOBAL_STATE_ZNODE_NAME = "global_state";
+    public static final String STATE_STORE_ZNODE = DUS_NAMESPACE + "/" + GLOBAL_STATE_ZNODE_NAME;
     public static final String ZNODE_PREFIX = ELECTION_NAMESPACE + "/app_";
 
     public static Properties loadDefault() {

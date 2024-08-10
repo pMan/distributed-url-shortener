@@ -2,7 +2,7 @@ package com.pman.distributedurlshortener.zk;
 
 import static com.pman.distributedurlshortener.Defaults.DUS_NAMESPACE;
 import static com.pman.distributedurlshortener.Defaults.ELECTION_NAMESPACE;
-import static com.pman.distributedurlshortener.Defaults.LEADER_NODE;
+import static com.pman.distributedurlshortener.Defaults.STATE_STORE_ZNODE;
 import static com.pman.distributedurlshortener.Defaults.ZNODE_PREFIX;
 
 import java.io.IOException;
@@ -134,15 +134,15 @@ public class ZooKeeperClient implements IZKClient {
      * @throws KeeperException      if node already exists
      */
     private Stat createLeaderStateZnode() throws KeeperException, InterruptedException {
-        Stat stat = znodeExists(LEADER_NODE);
+        Stat stat = znodeExists(STATE_STORE_ZNODE);
         if (null != stat)
             return stat;
 
         LeaderState leaderState = new LeaderState(0L);
-        String rootNode = zooKeeper.create(LEADER_NODE, leaderState.toBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE,
+        String rootNode = zooKeeper.create(STATE_STORE_ZNODE, leaderState.toBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE,
                 CreateMode.PERSISTENT);
         System.out.println("Leader node created: " + rootNode);
-        return znodeExists(LEADER_NODE);
+        return znodeExists(STATE_STORE_ZNODE);
     }
 
     /**
@@ -169,16 +169,16 @@ public class ZooKeeperClient implements IZKClient {
      * @return
      */
     private long getGlobalHash() {
-        Stat stat = znodeExists(LEADER_NODE);
+        Stat stat = znodeExists(STATE_STORE_ZNODE);
         boolean updateSucceeded = false;
         long newNext = 0L;
         do {
             try {
-                byte[] data = zooKeeper.getData(LEADER_NODE, false, stat);
+                byte[] data = zooKeeper.getData(STATE_STORE_ZNODE, false, stat);
                 LeaderState leaderState = LeaderState.fromBytes(data);
                 newNext = leaderState.next(BATCH_SIZE);
 
-                zooKeeper.setData(LEADER_NODE, leaderState.toBytes(), stat.getVersion());
+                zooKeeper.setData(STATE_STORE_ZNODE, leaderState.toBytes(), stat.getVersion());
                 updateSucceeded = true;
                 System.out.println("Next available number: " + newNext);
             } catch (KeeperException e) {
