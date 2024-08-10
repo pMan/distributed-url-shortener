@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html>
+
+    <head>
+        <title>Distributed URL shortener</title>
+        <script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.js"></script>
+        <link type="text/css" rel="stylesheet" href="ui/style.css">
+        <script type="text/javascript" src="ui/script.js"></script>
+    </head>
+
+    <body>
+        <div id="wrapper">
+            <div id="title">Distributed URL shortener</div>
+
+            <h4>Generate short URL</h4>
+
+            <div>
+                <span style="vertical-align: bottom;"> URL: </span>
+                <input type="text" id="url" style="width: 460px;" />
+                <span> <button id="submit">Create</button> </span>
+            </div>
+            <br />
+            <div id="results">Click on Create button above generate short URL.</div>
+            <br />
+
+            <h4>Cluster details</h4>
+
+            <div id="links">
+                <button id="info">Node info</button>
+                <button id="nodes">Active nodes</button>
+                <button id="status">Status</button>
+
+            </div>
+            <br />
+
+            <pre id="rest-results"></pre>
+            <br />
+
+            <div id="footer" style="font-size: small;">
+                Copyright &copy; pMan. <a href="https://github.com/pMan/distributed-url-shortener/">GitHub</a>
+            </div>
+        </div>
+    </body>
+
+</html>
