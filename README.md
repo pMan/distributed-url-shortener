@@ -1,6 +1,10 @@
 # distributed-url-shortener
 A distributed URL shortener in Java using ZooKeeper for resource management.
 
+## Architecture
+
+<img src="docs/architecture_diagram.png" width="100%"></img>
+
 ## Design
 - Each node works independantly and is accessible thorugh HTTP.
 - Each node exposes a few endpoints that clients can invoke.
