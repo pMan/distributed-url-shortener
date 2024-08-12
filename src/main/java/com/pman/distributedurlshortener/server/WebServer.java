@@ -26,6 +26,7 @@ public class WebServer {
         this.port = Integer.parseInt(port);
         httpServer = HttpServer.create(new InetSocketAddress(this.port), 0);
 
+        System.out.println("HTTP Server created");
         HttpResponseHandler httpResponseHandler = new HttpResponseHandler(ZooKeeperClient, this);
 
         address = "localhost";
@@ -45,6 +46,6 @@ public class WebServer {
 
     public void start() {
         httpServer.start();
-        System.out.println("Http server started, accepting requests at " + getAddress());
+        System.out.println("Http server started, accepting connections at " + getAddress());
     }
 }

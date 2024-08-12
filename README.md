@@ -17,5 +17,21 @@ A distributed URL shortener in Java using ZooKeeper for resource management.
 > git clone https://github.com/pMan/distributed-url-shortener.git
 > cd distributed-url-shortener
 > mvn clean package -DskipTests
+```
+
+#### Run in stand alone mode
+```
 > java -jar target/distributed-url-shortener-1.0-SNAPSHOT-jar-with-dependencies.jar
 ```
+
+#### Run overriding default properties
+```
+> java -jar target/distributed-url-shortener-1.0-SNAPSHOT-jar-with-dependencies.jar res/app1.properties
+```
+
+## Web interface of individual application
+
+#### Application running on port http://localhost:8091
+* active nodes are listed in the home page
+
+<img src="docs/screenshot.png" width="100%"></img>

@@ -2,7 +2,11 @@ package com.pman.distributedurlshortener.server;
 
 public class CustomBase64Encoder {
 
-    // shuffled array containing [0-9a-zA-Z-_]+
+    /**
+     * Refer: https://github.com/openjdk/jdk/blob/master/src/java.base/share/classes/java/util/Base64.java#L231
+     * 
+     * this is a shuffled array containing URL-safe characters [0-9a-zA-Z-_]+
+     */
     private static final char[] CHARS = new char[] { '-', 'c', 'h', 'i', 'j', '5', 'V', 'M', 'n', 'H', 'I', '3', 'u',
             'U', 'G', 'b', 'F', 't', 'v', 'L', 'E', '2', 'm', '8', 'k', 'g', 'a', 'R', '_', 'r', 'P', 'w', 'y', '9',
             'W', 'S', 'z', 's', '6', 'T', 'q', '1', '4', 'K', '0', 'p', 'N', 'l', 'J', 'Z', 'B', '7', 'A', 'X', 'e',
