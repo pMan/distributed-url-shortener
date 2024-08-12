@@ -15,12 +15,12 @@ public class ConnectionPool {
 
     public ConnectionPool() {
         HikariConfig config = getPostgresCon();
-        System.out.println("postgre config created");
 
         dataSource = new HikariDataSource(config);
-        System.out.println("postgre datasource created");
+        System.out.println("Connection pool created");
     }
 
+    @SuppressWarnings("unused")
     private HikariConfig getH2Config() {
         HikariConfig config = new HikariConfig();
 
@@ -43,6 +43,7 @@ public class ConnectionPool {
         config.addDataSourceProperty("user", "dus");
         config.addDataSourceProperty("password", "dus123");
 
+        System.out.println("postgres config created");
         return config;
     }
 

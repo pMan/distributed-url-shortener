@@ -1,12 +1,19 @@
-<xml>
-	<appender name="FILE" class="ch.qos.logback.core.FileAppender">
-		<file>./zookeeper.log</file>
-		<encoder>
-			<pattern>%date %level [%thread] %logger{10} [%file:%line] %msg%n</pattern>
-		</encoder>
-		<append>true</append>
-	</appender>
-	<logger name="org.apache.zookeeper" level="DEBUG" additivity="false">
-		<appender-ref ref="FILE" />
-	</logger>
-</xml>
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+	Configuration details can be found here:
+	https://github.com/apache/zookeeper/blob/master/conf/logback.xml
+-->
+
+<configuration>
+  <property name="zookeeper.console.threshold" value="ERROR"/>
+
+  <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+    <encoder>
+      <pattern>%d{ISO8601} [myid:%X{myid}] - %-5p [%t:%C{1}@%L] - %m%n</pattern>
+    </encoder>
+    <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+      <level>${zookeeper.console.threshold}</level>
+    </filter>
+  </appender>
+</configuration>
