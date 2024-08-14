@@ -66,13 +66,13 @@ public class ZooKeeperClient implements IZKClient {
      */
     private void createZnode() throws KeeperException, InterruptedException {
 
-        if (null == zooKeeper.exists(DUS_NAMESPACE, false)) {
+        if (null == znodeExists(DUS_NAMESPACE)) {
             String rootNode = zooKeeper.create(DUS_NAMESPACE, new byte[] {}, ZooDefs.Ids.OPEN_ACL_UNSAFE,
                     CreateMode.PERSISTENT);
             System.out.println("Root znode created: " + rootNode);
         }
 
-        if (null == zooKeeper.exists(ELECTION_NAMESPACE, false)) {
+        if (null == znodeExists(ELECTION_NAMESPACE)) {
             String electionNode = zooKeeper.create(ELECTION_NAMESPACE, new byte[] {}, ZooDefs.Ids.OPEN_ACL_UNSAFE,
                     CreateMode.PERSISTENT);
             System.out.println("Election namespace created: " + electionNode);
@@ -169,11 +169,12 @@ public class ZooKeeperClient implements IZKClient {
      * @return
      */
     private long getGlobalHash() {
-        Stat stat = znodeExists(STATE_STORE_ZNODE);
+        Stat stat = null;
         boolean updateSucceeded = false;
         long newNext = 0L;
         do {
             try {
+                stat = znodeExists(STATE_STORE_ZNODE);
                 byte[] data = zooKeeper.getData(STATE_STORE_ZNODE, false, stat);
                 LeaderState leaderState = LeaderState.fromBytes(data);
                 newNext = leaderState.next(BATCH_SIZE);
@@ -223,7 +224,7 @@ public class ZooKeeperClient implements IZKClient {
         } catch (KeeperException | InterruptedException e) {
             e.printStackTrace();
         }
-        return null;
+        return new Stat();
     }
 
     /**
@@ -240,7 +241,7 @@ public class ZooKeeperClient implements IZKClient {
 
             for (String child : children) {
 
-                Stat stat = zooKeeper.exists(ELECTION_NAMESPACE + "/" + child, false);
+                Stat stat = znodeExists(ELECTION_NAMESPACE + "/" + child);
                 byte[] data = zooKeeper.getData(ELECTION_NAMESPACE + "/" + child, false, stat);
 
                 NodeState savedState = NodeState.fromBytes(data);
