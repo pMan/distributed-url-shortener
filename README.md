@@ -39,3 +39,11 @@ A distributed URL shortener in Java using ZooKeeper for resource management.
 * active nodes are listed in the home page
 
 <img src="docs/screenshot.png" width="100%"></img>
+
+## JMH stats for hash generator
+
+```
+Benchmark                                   Mode  Cnt   Score   Error   Units
+CustomBase64EncoderBenchmark.longToBase64  thrpt    5   0.033 ± 0.003  ops/ms
+CustomBase64EncoderBenchmark.longToBase64   avgt    5  30.058 ± 2.165   ms/op
+```
