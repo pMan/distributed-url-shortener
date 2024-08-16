@@ -7,14 +7,14 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
 
-public record NodeState(String ip, String port) implements Serializable {
+public record LocalState(String ip, String port) implements Serializable {
 
-    public static NodeState fromBytes(byte[] bytes) {
+    public static LocalState fromBytes(byte[] bytes) {
         ByteArrayInputStream byteStream = new ByteArrayInputStream(bytes);
 
         try {
             ObjectInputStream objStream = new ObjectInputStream(byteStream);
-            return (NodeState) objStream.readObject();
+            return (LocalState) objStream.readObject();
         } catch (Exception e) {
             throw new RuntimeException(e.getMessage());
         }

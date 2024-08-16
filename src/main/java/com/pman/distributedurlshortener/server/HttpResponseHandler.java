@@ -9,7 +9,7 @@ import java.util.List;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.pman.distributedurlshortener.db.ConnectionPool;
-import com.pman.distributedurlshortener.zk.NodeState;
+import com.pman.distributedurlshortener.zk.LocalState;
 import com.pman.distributedurlshortener.zk.ZooKeeperClient;
 import com.sun.net.httpserver.Headers;
 import com.sun.net.httpserver.HttpExchange;
@@ -108,7 +108,7 @@ public class HttpResponseHandler implements HttpHandler {
             if (!exchange.getRequestMethod().equalsIgnoreCase("GET"))
                 exchange.close();
 
-            NodeState state = zooKeeperClient.getState();
+            LocalState state = zooKeeperClient.getState();
             response = new ObjectMapper().writeValueAsString(state);
             flushREST(exchange, HttpURLConnection.HTTP_OK, response);
             break;
@@ -117,7 +117,7 @@ public class HttpResponseHandler implements HttpHandler {
             if (!exchange.getRequestMethod().equalsIgnoreCase("GET"))
                 exchange.close();
 
-            List<NodeState> nodes = zooKeeperClient.getAllZnodes();
+            List<LocalState> nodes = zooKeeperClient.getAllZnodes();
             response = new ObjectMapper().writeValueAsString(nodes);
             flushREST(exchange, HttpURLConnection.HTTP_OK, "{ \"znodes\": " + response + "}");
             break;

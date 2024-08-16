@@ -10,7 +10,7 @@ import org.apache.zookeeper.KeeperException;
 import com.pman.distributedurlshortener.server.WebServer;
 import com.pman.distributedurlshortener.zk.ZooKeeperClient;
 
-public class Main {
+public class Application {
 
     public static void main(String[] args) throws IOException, KeeperException, InterruptedException {
 

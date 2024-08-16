@@ -85,19 +85,6 @@
 					</excludes>
 				</configuration>
 			</plugin>
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-compiler-plugin</artifactId>
-				<configuration>
-					<annotationProcessorPaths>
-						<path>
-							<groupId>org.openjdk.jmh</groupId>
-							<artifactId>jmh-generator-annprocess</artifactId>
-							<version>${jmh.version}</version>
-						</path>
-					</annotationProcessorPaths>
-				</configuration>
-			</plugin>
 
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
@@ -106,7 +93,7 @@
 				<configuration>
 					<archive>
 						<manifest>
-							<mainClass>com.pman.distributedurlshortener.Main</mainClass>
+							<mainClass>com.pman.distributedurlshortener.Application</mainClass>
 						</manifest>
 					</archive>
 					<descriptorRefs>
@@ -127,6 +114,7 @@
 			<plugin>
 				<groupId>org.codehaus.mojo</groupId>
 				<artifactId>exec-maven-plugin</artifactId>
+				<version>3.3.0</version>
 				<executions>
 					<execution>
 						<id>run-benchmarks</id>
