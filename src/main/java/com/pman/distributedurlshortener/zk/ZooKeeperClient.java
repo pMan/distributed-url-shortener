@@ -52,7 +52,7 @@ public class ZooKeeperClient implements IZKClient {
      * @throws KeeperException
      * @throws InterruptedException
      */
-    public void initZKClient() throws KeeperException, InterruptedException {
+    public void init() throws KeeperException, InterruptedException {
         state = createState();
         createZnode();
         electLeader();
@@ -289,6 +289,7 @@ public class ZooKeeperClient implements IZKClient {
     @Override
     public void close() {
         try {
+            System.out.println("stopping zookeeper client");
             zooKeeper.close();
         } catch (InterruptedException e) {
             e.printStackTrace();
