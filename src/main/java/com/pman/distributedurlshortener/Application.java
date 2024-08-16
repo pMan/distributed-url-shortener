@@ -48,9 +48,19 @@ public class Application {
         ZooKeeperClient zooKeeperClient = new ZooKeeperClient(hostport, timeout, port);
         WebServer httpServer = new WebServer(port, zooKeeperClient);
 
-        zooKeeperClient.initZKClient();
+        zooKeeperClient.init();
         httpServer.start();
+
+        Runtime.getRuntime().addShutdownHook(new Thread() {
+            public void run() {
+                httpServer.stop();
+                zooKeeperClient.close();
+                System.out.println("App shutdown gracefully!");
+            }
+        });
+
         zooKeeperClient.waitTillDisconnected();
+
     }
 
     public static Properties getProperties() {

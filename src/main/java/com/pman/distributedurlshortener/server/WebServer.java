@@ -44,6 +44,11 @@ public class WebServer {
         return "http://" + address + ":" + port;
     }
 
+    public void stop() {
+        System.out.println("stopping Http Server");
+        httpServer.stop(3);
+    }
+
     public void start() {
         httpServer.start();
         System.out.println("Http server started, accepting connections at " + getAddress());
