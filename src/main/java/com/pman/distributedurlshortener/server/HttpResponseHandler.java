@@ -84,7 +84,7 @@ public class HttpResponseHandler implements HttpHandler {
     public void handle(HttpExchange exchange) throws IOException {
         String response = "";
         String uri = exchange.getRequestURI().getPath();
-        System.out.println("URI: " + uri);
+        System.out.println(String.format("%-4s", exchange.getRequestMethod()) + ": " + uri);
 
         switch (uri) {
         case HOME:

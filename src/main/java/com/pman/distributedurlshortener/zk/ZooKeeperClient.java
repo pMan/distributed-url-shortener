@@ -1,10 +1,5 @@
 package com.pman.distributedurlshortener.zk;
 
-import static com.pman.distributedurlshortener.Defaults.DUS_NAMESPACE;
-import static com.pman.distributedurlshortener.Defaults.ELECTION_NAMESPACE;
-import static com.pman.distributedurlshortener.Defaults.STATE_STORE_ZNODE;
-import static com.pman.distributedurlshortener.Defaults.ZNODE_PREFIX;
-
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
@@ -21,7 +16,15 @@ import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.data.Stat;
 
+import com.pman.distributedurlshortener.Application;
+
 public class ZooKeeperClient implements IZKClient {
+
+    private static String DUS_NAMESPACE = Application.getProperties().getProperty("zookeeper.dus.root.namespace");
+    private static String ELECTION_NAMESPACE = Application.getProperties()
+            .getProperty("zookeeper.dus.election.namespace");;
+    private static String ZNODE_PREFIX = Application.getProperties().getProperty("zookeeper.dus.znode.prefix");
+    private static String STATE_STORE_ZNODE = Application.getProperties().getProperty("zookeeper.globalstate.znode");
 
     private ZooKeeper zooKeeper;
     private DusWatcher watcher;
