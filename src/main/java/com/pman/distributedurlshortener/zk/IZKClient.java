@@ -9,9 +9,9 @@ public interface IZKClient {
 
     public void electLeader() throws KeeperException, InterruptedException;
 
-    public List<NodeState> getAllZnodes();
+    public List<LocalState> getAllZnodes();
 
-    public NodeState getState();
+    public LocalState getState();
 
     public ZooKeeper getZooKeeper();
 

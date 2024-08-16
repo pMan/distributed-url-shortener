@@ -28,7 +28,7 @@ public class ZooKeeperClient implements IZKClient {
     private String webServerPort;
 
     private String nodeName;
-    private NodeState state;
+    private LocalState state;
 
     private final int BATCH_SIZE = 100;
     private AtomicLong hashNumber = new AtomicLong(0L);
@@ -138,7 +138,7 @@ public class ZooKeeperClient implements IZKClient {
         if (null != stat)
             return stat;
 
-        LeaderState leaderState = new LeaderState(0L);
+        GlobalState leaderState = new GlobalState(0L);
         String rootNode = zooKeeper.create(STATE_STORE_ZNODE, leaderState.toBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE,
                 CreateMode.PERSISTENT);
         System.out.println("Leader node created: " + rootNode);
@@ -176,7 +176,7 @@ public class ZooKeeperClient implements IZKClient {
             try {
                 stat = znodeExists(STATE_STORE_ZNODE);
                 byte[] data = zooKeeper.getData(STATE_STORE_ZNODE, false, stat);
-                LeaderState leaderState = LeaderState.fromBytes(data);
+                GlobalState leaderState = GlobalState.fromBytes(data);
                 newNext = leaderState.next(BATCH_SIZE);
 
                 zooKeeper.setData(STATE_STORE_ZNODE, leaderState.toBytes(), stat.getVersion());
@@ -208,12 +208,13 @@ public class ZooKeeperClient implements IZKClient {
         if (cur < upperLimitOfHash)
             return cur;
 
-        lock.lock();
-
-        if (hashNumber.get() >= upperLimitOfHash)
-            this.updateCurrentHash();
-
-        lock.unlock();
+        try {
+            lock.lock();
+            if (hashNumber.get() >= upperLimitOfHash)
+                this.updateCurrentHash();
+        } finally {
+            lock.unlock();
+        }
 
         return getCurrentHash();
     }
@@ -233,9 +234,9 @@ public class ZooKeeperClient implements IZKClient {
      * @return
      */
     @Override
-    public List<NodeState> getAllZnodes() {
+    public List<LocalState> getAllZnodes() {
         try {
-            List<NodeState> list = new ArrayList<>();
+            List<LocalState> list = new ArrayList<>();
             List<String> children = zooKeeper.getChildren(ELECTION_NAMESPACE, false);
             System.out.println("Number of active nodes: " + children.size());
 
@@ -244,7 +245,7 @@ public class ZooKeeperClient implements IZKClient {
                 Stat stat = znodeExists(ELECTION_NAMESPACE + "/" + child);
                 byte[] data = zooKeeper.getData(ELECTION_NAMESPACE + "/" + child, false, stat);
 
-                NodeState savedState = NodeState.fromBytes(data);
+                LocalState savedState = LocalState.fromBytes(data);
 
                 list.add(savedState);
             }
@@ -262,18 +263,18 @@ public class ZooKeeperClient implements IZKClient {
      * 
      * @return
      */
-    private NodeState createState() {
+    private LocalState createState() {
         String address = "localhost";
 
         try {
             address = InetAddress.getLocalHost().getHostAddress();
         } catch (UnknownHostException e) {
         }
-        return new NodeState(address, webServerPort);
+        return new LocalState(address, webServerPort);
     }
 
     @Override
-    public NodeState getState() {
+    public LocalState getState() {
         return state;
     }
 
