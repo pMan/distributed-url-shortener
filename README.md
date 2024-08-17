@@ -15,22 +15,39 @@ A distributed URL shortener in Java using ZooKeeper for resource management.
 - URLs and corresponding hashes will be persisted in an RDBMS table with two columns (hash, url).
 
 ## How to run
-
-#### Clone and build kochudb
+Clone the repository
 ```
 > git clone https://github.com/pMan/distributed-url-shortener.git
 > cd distributed-url-shortener
-> mvn clean package -DskipTests
 ```
+There are few ways to launch the app.
 
-#### Run in stand alone mode
+### 1. Run with Docker
+#### Use `docker compose`
 ```
+> docker compose up
+```
+The above command will use `docker-compose.yml` file present in the root directory of this repo. Note that the `docker compose` will download and run below components. 
+* postgres database server
+* zookeeper server
+* this application image
+
+All images are downloaded from Docker hub and run locally. They don't save state on exit.
+### 2. Run manually
+In this case, you need to have a zookeeper cluster and postgres database up and running.
+Edit the `src/main/resources/application.properties` file, update zookeeper and datasource configuration properties. Then run below command.
+```
+> mvn clean package -DskipTests
 > java -jar target/distributed-url-shortener-1.0-SNAPSHOT-jar-with-dependencies.jar
 ```
+Alternatively, default properties can be overriden by suppling a command line argument.
 
-#### Run overriding default properties
+Multiple instances of the app can be run by providing each instance with a unique properties file, as given below, so that they can form a cluster.
+
+They may share the zookeeper cluster and postgres database, but each instance must have a unique port to listen to.
 ```
 > java -jar target/distributed-url-shortener-1.0-SNAPSHOT-jar-with-dependencies.jar res/app1.properties
+> java -jar target/distributed-url-shortener-1.0-SNAPSHOT-jar-with-dependencies.jar res/app2.properties
 ```
 
 ## Web interface of individual application
@@ -41,6 +58,7 @@ A distributed URL shortener in Java using ZooKeeper for resource management.
 <img src="docs/screenshot.png" width="100%"></img>
 
 ## JMH stats for hash generator
+Below table shows the result of throughput and average time tests of the hash function.
 
 ```
 Benchmark                                   Mode  Cnt   Score   Error   Units
