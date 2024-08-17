@@ -36,7 +36,7 @@ $(document).ready(function () {
     function onUrlShortenResponse(data, status) {
         if (status === "success") {
             var shortUrl = data.url;
-            shortenResults.html('<a target="_blank" href="' + shortUrl + '">' + shortUrl + shortUrl.split('/')[3] + '</a');
+            shortenResults.html('<a target="_blank" href="' + shortUrl + '">' + shortUrl + '</a');
             shortenResults.show();
         } else {
             alert("Error connecting to the server " + status);

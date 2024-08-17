@@ -31,7 +31,7 @@ public class HttpResponseHandler implements HttpHandler {
     static String SHORTEN_RESPONSE;
 
     private ZooKeeperClient zooKeeperClient;
-    private ConnectionPool pool;
+    private ConnectionPool connectionPool;
     private static final String HASH_PATTERN = "^/[a-zA-Z0-9-_]+$";
 
     /**
@@ -42,7 +42,7 @@ public class HttpResponseHandler implements HttpHandler {
      */
     public HttpResponseHandler(ZooKeeperClient zooKeeperClient, String hostport) {
         this.zooKeeperClient = zooKeeperClient;
-        pool = new ConnectionPool();
+        connectionPool = new ConnectionPool();
 
         SHORTEN_RESPONSE = "{\"url\": \"" + hostport + "/{URL}\"}";
     }
@@ -56,7 +56,7 @@ public class HttpResponseHandler implements HttpHandler {
      */
     private void redirect(HttpExchange exchange, String hash) throws IOException {
         try {
-            String url = pool.getUrl(hash);
+            String url = connectionPool.getUrl(hash);
 
             if (url == null)
                 flush(exchange, HttpURLConnection.HTTP_NOT_FOUND, TARGET_URL_NOT_FOUND);
@@ -78,12 +78,12 @@ public class HttpResponseHandler implements HttpHandler {
      * @throws SQLException
      */
     public String persist(String url) throws SQLException {
-        String shortURL = pool.getHash(url);
+        String shortURL = connectionPool.getHash(url);
         if (shortURL != null)
             return shortURL;
 
         shortURL = CustomBase64Encoder.longToBase64(zooKeeperClient.getCurrentHash());
-        pool.save(shortURL, url);
+        connectionPool.save(shortURL, url);
         return shortURL;
     }
 
