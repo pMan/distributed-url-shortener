@@ -1,0 +1,44 @@
+version: '3.1'
+
+services:
+  zookeeper:
+    image: zookeeper:3.9.2-jre-17
+    restart: always
+    hostname: zookeeper
+    ports:
+      - 2181:2181
+    environment:
+      ZOO_MY_ID: 1
+      ZOO_SERVERS: server.1=zookeeper:2888:3888;2181
+
+  postgres:
+    image: postgres:13.16-bullseye
+    restart: always
+    hostname: postgres
+    ports:
+      - 5432:5432
+    environment:
+      POSTGRES_USER: dus
+      POSTGRES_PASSWORD: dus123
+      POSTGRES_ROOT_PASSWORD: root
+      POSTGRES_DB: dus
+    volumes:
+      - ./src/main/resources/postgres_container_init.sql:/docker-entrypoint-initdb.d/init.sql
+
+  dus:
+    image: cholapman/dus
+    depends_on:
+      - zookeeper
+      - postgres
+    restart: always
+    hostname: dus
+    ports:
+      - 8090:8090
+    environment:
+      ZOO_HOSTPORT: zoo1:2181
+
+networks:
+  dus:
+    driver: "bridge"
+
+
