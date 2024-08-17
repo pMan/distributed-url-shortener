@@ -297,7 +297,8 @@ public class ZooKeeperClient implements IZKClient {
     }
 
     /**
-     * main thread waits on zookeeper object until Disconnected Event
+     * main thread waits on zookeeper object until Disconnected Event is received
+     * 
      * {@code Event.KeeperState.SyncConnected} is received from the zookeeper
      * cluster
      */

@@ -66,8 +66,7 @@ CREATE INDEX IF NOT EXISTS url_index
 -- example INSERT
 INSERT INTO dus_schema.url_mapping(
 	hash, url)
-	VALUES ('j6A', 'https://wikipedia.org');
+	VALUES ('j6A', 'https://www.wikipedia.org/');
 
 -- example SELECT
 SELECT hash, url FROM dus_schema.url_mapping;
-

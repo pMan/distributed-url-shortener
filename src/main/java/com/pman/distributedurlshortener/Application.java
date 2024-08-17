@@ -2,7 +2,6 @@ package com.pman.distributedurlshortener;
 
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.util.Map.Entry;
 import java.util.Properties;
 
 import org.apache.zookeeper.KeeperException;
@@ -37,16 +36,15 @@ public class Application {
 
         System.out.println(
                 "Starting Distributed URL shortener!\n~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~");
-        for (Entry<Object, Object> entry : properties.entrySet()) {
-            System.out.println(String.format("%-36s", entry.getKey()) + ": " + entry.getValue());
-        }
+        properties.entrySet().forEach(e -> printFormatted(e.getKey().toString(), e.getValue().toString()));
 
         String hostport = properties.getProperty("zookeeper.hostport");
         int timeout = Integer.parseInt(properties.getProperty("zookeeper.sessiontimeout.ms"));
         String port = properties.getProperty("http.server.port");
+        String redirectHostname = properties.getProperty("app.hostname", "http://localhost") + ":" + port;
 
         ZooKeeperClient zooKeeperClient = new ZooKeeperClient(hostport, timeout, port);
-        WebServer httpServer = new WebServer(port, zooKeeperClient);
+        WebServer httpServer = new WebServer(port, redirectHostname, zooKeeperClient);
 
         zooKeeperClient.init();
         httpServer.start();
@@ -65,5 +63,17 @@ public class Application {
 
     public static Properties getProperties() {
         return Application.properties;
+    }
+
+    public static Properties getPostgres() {
+        Properties dbProperties = new Properties();
+        properties.entrySet().stream().filter(key -> key.toString().startsWith("sql."))
+                .forEach(item -> dbProperties.put(item.getKey(), item.getValue()));
+        return dbProperties;
+    }
+
+    private static void printFormatted(String key, String val) {
+        val = key.toString().endsWith("password") ? "[redacted]" : val;
+        System.out.println(String.format("%-36s", key) + ": " + val);
     }
 }

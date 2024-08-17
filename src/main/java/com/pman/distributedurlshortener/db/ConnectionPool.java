@@ -5,7 +5,9 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.Properties;
 
+import com.pman.distributedurlshortener.Application;
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
 
@@ -20,30 +22,25 @@ public class ConnectionPool {
         System.out.println("Connection pool created");
     }
 
-    @SuppressWarnings("unused")
-    private HikariConfig getH2Config() {
-        HikariConfig config = new HikariConfig();
-
-        config.setJdbcUrl("jdbc:mysql://localhost:3306/empdb");
-        config.setUsername("root");
-        config.setPassword("root");
-        config.addDataSourceProperty("minimumIdle", "5");
-        config.addDataSourceProperty("maximumPoolSize", "25");
-
-        return config;
-    }
-
     private HikariConfig getPostgresCon() {
+        Properties dbConfig = Application.getPostgres();
         HikariConfig config = new HikariConfig();
 
-        config.setDataSourceClassName("org.postgresql.ds.PGSimpleDataSource");
-        config.addDataSourceProperty("serverName", "localhost");
-        config.addDataSourceProperty("portNumber", "5432");
-        config.addDataSourceProperty("databaseName", "dus");
-        config.addDataSourceProperty("user", "dus");
-        config.addDataSourceProperty("password", "dus123");
+        config.setDataSourceClassName(dbConfig.getProperty("sql.datasource.classname"));
+        config.addDataSourceProperty("serverName", dbConfig.getProperty("sql.datasource.servername"));
+        config.addDataSourceProperty("portNumber", dbConfig.getProperty("sql.datasource.portnumber"));
+        config.addDataSourceProperty("databaseName", dbConfig.getProperty("sql.datasource.databasename"));
+        config.setUsername(dbConfig.getProperty("sql.datasource.user"));
+        config.setPassword(dbConfig.getProperty("sql.datasource.password"));
 
-        System.out.println("postgres config created");
+        config.setMinimumIdle(Integer.parseInt(dbConfig.getProperty("sql.datasource.minidle")));
+        config.setMaximumPoolSize(Integer.parseInt(dbConfig.getProperty("sql.datasource.maxpoolsize")));
+
+        config.setPoolName("DUS Pool");
+
+        System.out.println("datasource config created");
+        System.out.println(config.getDataSourceProperties().toString());
+
         return config;
     }
 
