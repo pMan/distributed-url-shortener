@@ -23,8 +23,14 @@ public class HttpResponseHandler implements HttpHandler {
     static final String LIST_ALL_ZNODES = "/nodes";
     static final String SHORTEN = "/shorten";
 
+    static final String STATUS = "{\"status\": \"LIVE\"}";
+    static final String INVALID_INPUT = "Invalid input";
+    static final String SHORTEN_ERROR = "{\"error\": \"Error occurred while connecting to DB.\"}";
+    static final String ZNODES_RESPONSE = "{ \"znodes\": {ZNODES}}";
+    static final String TARGET_URL_NOT_FOUND = "Target URL not found";
+    static String SHORTEN_RESPONSE;
+
     private ZooKeeperClient zooKeeperClient;
-    private WebServer webServer;
     private ConnectionPool pool;
     private static final String HASH_PATTERN = "^/[a-zA-Z0-9-_]+$";
 
@@ -34,10 +40,11 @@ public class HttpResponseHandler implements HttpHandler {
      * @param zooKeeperClient
      * @param webServer
      */
-    public HttpResponseHandler(ZooKeeperClient zooKeeperClient, WebServer webServer) {
+    public HttpResponseHandler(ZooKeeperClient zooKeeperClient, String hostport) {
         this.zooKeeperClient = zooKeeperClient;
-        this.webServer = webServer;
         pool = new ConnectionPool();
+
+        SHORTEN_RESPONSE = "{\"url\": \"" + hostport + "/{URL}\"}";
     }
 
     /**
@@ -50,14 +57,14 @@ public class HttpResponseHandler implements HttpHandler {
     private void redirect(HttpExchange exchange, String hash) throws IOException {
         try {
             String url = pool.getUrl(hash);
+
+            if (url == null)
+                flush(exchange, HttpURLConnection.HTTP_NOT_FOUND, TARGET_URL_NOT_FOUND);
+
             exchange.getResponseHeaders().set("Content-Type", "text/html");
-            if (url != null) {
-                exchange.getResponseHeaders().set("Location", url);
-                flush(exchange, HttpURLConnection.HTTP_MOVED_PERM, "");
-            } else {
-                String response = "Target URL not found";
-                flush(exchange, HttpURLConnection.HTTP_NOT_FOUND, response);
-            }
+            exchange.getResponseHeaders().set("Location", url);
+            flush(exchange, HttpURLConnection.HTTP_MOVED_PERM, "");
+
         } catch (SQLException e) {
             e.printStackTrace();
         }
@@ -100,8 +107,7 @@ public class HttpResponseHandler implements HttpHandler {
             if (!exchange.getRequestMethod().equalsIgnoreCase("GET"))
                 exchange.close();
 
-            response = "{\"status\": \"LIVE\"}";
-            flushREST(exchange, HttpURLConnection.HTTP_OK, response);
+            flushREST(exchange, HttpURLConnection.HTTP_OK, STATUS);
             break;
 
         case ZNODE_INFO:
@@ -118,8 +124,8 @@ public class HttpResponseHandler implements HttpHandler {
                 exchange.close();
 
             List<LocalState> nodes = zooKeeperClient.getAllZnodes();
-            response = new ObjectMapper().writeValueAsString(nodes);
-            flushREST(exchange, HttpURLConnection.HTTP_OK, "{ \"znodes\": " + response + "}");
+            String znodes = new ObjectMapper().writeValueAsString(nodes);
+            flushREST(exchange, HttpURLConnection.HTTP_OK, ZNODES_RESPONSE.replace("{ZNODES}", znodes));
             break;
 
         case SHORTEN:
@@ -135,17 +141,17 @@ public class HttpResponseHandler implements HttpHandler {
             String input = new String(data, StandardCharsets.UTF_8);
 
             if (length == 0 || input.trim().length() == 0) {
-                response = "Invalid input";
+                response = INVALID_INPUT;
                 flush(exchange, HttpURLConnection.HTTP_BAD_REQUEST, response);
                 return;
             }
 
             try {
                 String shortUrl = persist(input);
-                response = "{\"url\": \"" + webServer.getAddress() + "/" + shortUrl + "\"}";
+                response = SHORTEN_RESPONSE.replace("{URL}", shortUrl);
             } catch (SQLException e) {
                 e.printStackTrace();
-                response = "{\"error\": \"Error occurred while connecting to DB.\"}";
+                response = SHORTEN_ERROR;
             }
 
             flushREST(exchange, HttpURLConnection.HTTP_OK, response);
@@ -165,9 +171,9 @@ public class HttpResponseHandler implements HttpHandler {
                 } else if (uri.endsWith("favicon.ico")) {
                     exchange.getResponseHeaders().set("Content-Type", "image/x-icon");
                     InputStream assetStream = getClass().getResourceAsStream(uri);
-                    byte[] b = assetStream.readAllBytes();
-                    exchange.sendResponseHeaders(HttpURLConnection.HTTP_OK, b.length);
-                    exchange.getResponseBody().write(b);
+                    byte[] bytes = assetStream.readAllBytes();
+                    exchange.sendResponseHeaders(HttpURLConnection.HTTP_OK, bytes.length);
+                    exchange.getResponseBody().write(bytes);
                     exchange.close();
                     return;
                 } else {

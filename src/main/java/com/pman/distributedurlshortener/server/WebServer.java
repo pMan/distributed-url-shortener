@@ -1,9 +1,7 @@
 package com.pman.distributedurlshortener.server;
 
 import java.io.IOException;
-import java.net.InetAddress;
 import java.net.InetSocketAddress;
-import java.net.UnknownHostException;
 import java.util.concurrent.Executors;
 
 import com.pman.distributedurlshortener.zk.ZooKeeperClient;
@@ -13,7 +11,7 @@ public class WebServer {
 
     private HttpServer httpServer;
     private int port;
-    private String address;
+    private String redirectHostname;
 
     /**
      * constructor
@@ -22,26 +20,17 @@ public class WebServer {
      * @param ZooKeeperClient
      * @throws IOException
      */
-    public WebServer(String port, ZooKeeperClient ZooKeeperClient) throws IOException {
+    public WebServer(String port, String redirectHostname, ZooKeeperClient ZooKeeperClient) throws IOException {
         this.port = Integer.parseInt(port);
         httpServer = HttpServer.create(new InetSocketAddress(this.port), 0);
+        this.redirectHostname = redirectHostname;
 
         System.out.println("HTTP Server created");
-        HttpResponseHandler httpResponseHandler = new HttpResponseHandler(ZooKeeperClient, this);
-
-        address = "localhost";
-        try {
-            address = InetAddress.getLocalHost().getHostAddress();
-        } catch (UnknownHostException e) {
-        }
+        HttpResponseHandler httpResponseHandler = new HttpResponseHandler(ZooKeeperClient, redirectHostname);
 
         httpServer.createContext("/", httpResponseHandler);
 
         httpServer.setExecutor(Executors.newFixedThreadPool(4));
-    }
-
-    public String getAddress() {
-        return "http://" + address + ":" + port;
     }
 
     public void stop() {
@@ -51,6 +40,6 @@ public class WebServer {
 
     public void start() {
         httpServer.start();
-        System.out.println("Http server started, accepting connections at " + getAddress());
+        System.out.println("Http server started, accepting connections at " + redirectHostname);
     }
 }

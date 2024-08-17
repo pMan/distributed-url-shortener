@@ -44,9 +44,10 @@ public class Application {
         String hostport = properties.getProperty("zookeeper.hostport");
         int timeout = Integer.parseInt(properties.getProperty("zookeeper.sessiontimeout.ms"));
         String port = properties.getProperty("http.server.port");
+        String redirectHostname = properties.getProperty("app.hostname", "http://localhost") + ":" + port;
 
         ZooKeeperClient zooKeeperClient = new ZooKeeperClient(hostport, timeout, port);
-        WebServer httpServer = new WebServer(port, zooKeeperClient);
+        WebServer httpServer = new WebServer(port, redirectHostname, zooKeeperClient);
 
         zooKeeperClient.init();
         httpServer.start();
