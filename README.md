@@ -36,11 +36,16 @@ All images are downloaded from Docker hub and run locally. They don't save state
 ### 2. Run manually
 In this case, you need to have a zookeeper cluster and postgres database up and running.
 Edit the `src/main/resources/application.properties` file, update zookeeper and datasource configuration properties. Then run below command.
+Run the postgres script to set up user, database, schema and table.
+```
+> psql -h <host> -d <database> -U <user> -p 5432 -a -q -f src/main/resources/postgres_local_setup.sql
+```
+And then run below commands.
 ```
 > mvn clean package -DskipTests
 > java -jar target/distributed-url-shortener-1.0-SNAPSHOT-jar-with-dependencies.jar
 ```
-Alternatively, default properties can be overriden by suppling a command line argument.
+Alternatively, default properties can be overriden by providing a command line argument.
 
 Multiple instances of the app can be run by providing each instance with a unique properties file, as given below, so that they can form a cluster.
 
