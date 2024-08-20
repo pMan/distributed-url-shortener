@@ -1,20 +1,7 @@
--- Database: dus
+-- run this file from terminal to set up database
+-- psql -h localhost -d <root_user> -U <password> -p 5432 -a -q -f src/main/resources/postgres_local_setup.sql
 
--- DROP DATABASE IF EXISTS dus;
-
-CREATE DATABASE dus
-    WITH
-    OWNER = dus
-    ENCODING = 'UTF8'
-    LC_COLLATE = 'C'
-    LC_CTYPE = 'C'
-    TABLESPACE = pg_default
-    CONNECTION LIMIT = -1
-    IS_TEMPLATE = False;
-
--- Role: dus
--- DROP ROLE IF EXISTS dus;
-
+-- CREATE ROLE dus
 CREATE ROLE dus WITH
   LOGIN
   NOSUPERUSER
@@ -25,6 +12,21 @@ CREATE ROLE dus WITH
   ENCRYPTED PASSWORD 'SCRAM-SHA-256$4096:UuaHLUgebeBlZ89ro6TJmg==$hlgqJrVnF3B4myS9tsFZSxtJtZgDAg8LXT0yjUxYRwA=:yIxbNer0/eymXISBSS+Vzc4KjIQvvemKSXweflqndWQ=';
 
 COMMENT ON ROLE dus IS 'user for distributed URL shortener';
+
+
+-- CREATE DATABASE dus
+CREATE DATABASE dus
+    WITH
+    OWNER = dus
+    ENCODING = 'UTF8'
+    LC_COLLATE = 'C'
+    LC_CTYPE = 'C'
+    TABLESPACE = pg_default
+    CONNECTION LIMIT = -1
+    IS_TEMPLATE = False;
+
+-- Connect to DATABASE
+\connect dus
 
 ALTER USER dus WITH PASSWORD 'dus123';
 
