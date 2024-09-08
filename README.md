@@ -33,6 +33,9 @@ The above command will use `docker-compose.yml` file present in the root directo
 * this application image
 
 All images are downloaded from Docker hub and run locally. They don't save state on exit.
+
+Run `docker compose stop` to stop all services.
+
 ### 2. Run manually
 In this case, you need to have a zookeeper cluster and postgres database up and running.
 Edit the `src/main/resources/application.properties` file, update zookeeper and datasource configuration properties. Then run below command.
