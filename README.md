@@ -33,6 +33,9 @@ The above command will use `docker-compose.yml` file present in the root directo
 * this application image
 
 All images are downloaded from Docker hub and run locally. They don't save state on exit.
+
+Run `docker compose stop` to stop all services.
+
 ### 2. Run manually
 In this case, you need to have a zookeeper cluster and postgres database up and running.
 Edit the `src/main/resources/application.properties` file, update zookeeper and datasource configuration properties. Then run below command.
@@ -44,6 +47,36 @@ And then run below commands.
 ```
 > mvn clean package -DskipTests
 > java -jar target/distributed-url-shortener-1.0-SNAPSHOT-jar-with-dependencies.jar
+```
+It will print app config ans status on the screen:
+```
+> java -jar target/distributed-url-shortener-1.0-SNAPSHOT-jar-with-dependencies.jar 
+Starting Distributed URL shortener!
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+zookeeper.dus.election.namespace    : /DUS/election
+zookeeper.hostport                  : zookeeper:2181
+sql.datasource.portnumber           : 5432
+sql.datasource.maxpoolsize          : 25
+http.server.port                    : 8090
+sql.datasource.minidle              : 5
+sql.datasource.databasename         : dus
+sql.datasource.user                 : dus
+app.hostname                        : http://localhost
+sql.datasource.classname            : org.postgresql.ds.PGSimpleDataSource
+zookeeper.dus.znode.prefix          : /DUS/election/app_
+sql.datasource.password             : [redacted]
+zookeeper.dus.root.namespace        : /DUS
+zookeeper.globalstate.znode         : /DUS/global_state
+sql.datasource.servername           : postgres
+zookeeper.sessiontimeout.ms         : 1000
+HTTP Server created
+datasource config created
+Connected to Zookeeper cluster
+Connection pool created
+znode created: /DUS/election/app_0000000021
+I've been selected as the leader
+Next available number: 2100
+Http server started, accepting connections at http://localhost:8090
 ```
 Alternatively, default properties can be overriden by providing a command line argument.
 
