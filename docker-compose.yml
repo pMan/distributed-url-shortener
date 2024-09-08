@@ -23,9 +23,9 @@ services:
       POSTGRES_ROOT_PASSWORD: root
       POSTGRES_DB: dus
     volumes:
-      - ./src/main/resources/postgres_container_init.sql:/docker-entrypoint-initdb.d/init.sql
+      - ./res/postgres_container_init.sql:/docker-entrypoint-initdb.d/init.sql
 
-  dus:
+  dus-1:
     image: cholapman/dus
     depends_on:
       - zookeeper
@@ -35,7 +35,19 @@ services:
     ports:
       - 8090:8090
     environment:
-      ZOO_HOSTPORT: zoo1:2181
+      ZOO_HOSTPORT: zookeeper:2181
+
+  dus-2:
+    image: cholapman/dus
+    depends_on:
+      - zookeeper
+      - postgres
+    restart: always
+    hostname: dus
+    ports:
+      - 8091:8090
+    environment:
+      ZOO_HOSTPORT: zookeeper:2181
 
 networks:
   dus:
